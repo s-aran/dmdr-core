@@ -1,3 +1,5 @@
+mod model;
+
 use std::io::Read;
 use std::{fs::File, path::Path};
 
@@ -33,6 +35,3 @@ fn main() {
         println!("{:?}", e);
     }
 }
-
-
-fn 
