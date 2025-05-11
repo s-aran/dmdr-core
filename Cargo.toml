@@ -1,0 +1,8 @@
+[package]
+name = "dmdr-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rustpython-parser = { version = "0.4.0", features = ["full-lexer", "serde"] }
+serde = "1.0.219"
