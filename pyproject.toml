@@ -1,0 +1,18 @@
+[project]
+name = "mysite"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2.1",
+    "djangorestframework>=3.16.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=5.2.0",
+    "icecream>=2.1.4",
+    "mypy>=1.15.0",
+    "ruff>=0.11.10",
+]
