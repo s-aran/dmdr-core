@@ -21,19 +21,7 @@ class MyModel:
         repr=False, compare=False, hash=False, init=True, metadata={"asdict": False}
     )
 
-    @staticmethod
-    def from_instance(model: models.Model) -> MyModel:
-        instance = model._meta
-        # ic(vars(instance))
-
-        return MyModel(
-            app_label=instance.app_label,
-            db_table=instance.db_table,
-            model_name=instance.model_name,
-            object_name=instance.object_name,
-            fields=[MyField.from_instance(f) for f in instance.get_fields()],
-            _meta_data=MetaData.make(model),
-        )
-
     def __str__(self) -> str:
         return json.dumps(dataclasses.asdict(self))
+
+
