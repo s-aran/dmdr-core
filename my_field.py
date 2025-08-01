@@ -21,6 +21,8 @@ class MyField:
     related_model: MetaData | None
     validators: list[str]
 
+    null: bool
+
     _meta_data: MetaData = field(
         repr=False, compare=False, hash=False, init=True, metadata={"asdict": False}
     )
@@ -28,3 +30,4 @@ class MyField:
     def __str__(self) -> str:
         return json.dumps(dataclasses.asdict(self))
 
+    def to_dixt(self) 
