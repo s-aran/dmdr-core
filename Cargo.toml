@@ -16,7 +16,7 @@ ahash = { version = "0.8.12", features = ["serde"] }
 opt-level = 3
 debug = false
 rpath = false
-lto = true
+lto = "fat"
 debug-assertions = false
 codegen-units = 1
 strip = true
