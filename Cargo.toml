@@ -7,10 +7,8 @@ edition = "2024"
 clap = { version = "4.5.42", features = ["derive"] }
 clap_derive = "4.5.41"
 graphviz-rust = "0.9.5"
-# rustpython-parser = { version = "0.4.0", features = ["full-lexer", "serde"] }
 serde = { version = "1.0.219", features = ["derive"] }
 simd-json = "0.15.1"
-# serde_json = "1.0.142"
 ahash = { version = "0.8.12", features = ["serde"] }
 
 
