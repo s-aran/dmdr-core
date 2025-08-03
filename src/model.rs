@@ -157,6 +157,16 @@ impl UuidIndexes {
         }
     }
 
+    /// get model objects
+    pub fn get_models(&self) -> Vec<Arc<MyModel>> {
+        self.model_map.values().cloned().collect()
+    }
+
+    // get field objects
+    pub fn get_fields(&self) -> Vec<Arc<MyField>> {
+        self.field_map.values().cloned().collect()
+    }
+
     /// get model object from uuid
     pub fn get_model(&self, uuid: &str) -> Arc<MyModel> {
         Arc::clone(self.model_map.get(uuid).unwrap())
