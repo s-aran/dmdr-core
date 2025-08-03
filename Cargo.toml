@@ -4,5 +4,24 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rustpython-parser = { version = "0.4.0", features = ["full-lexer", "serde"] }
-serde = "1.0.219"
+clap = { version = "4.5.42", features = ["derive"] }
+clap_derive = "4.5.41"
+graphviz-rust = "0.9.5"
+# rustpython-parser = { version = "0.4.0", features = ["full-lexer", "serde"] }
+serde = { version = "1.0.219", features = ["derive"] }
+simd-json = "0.15.1"
+# serde_json = "1.0.142"
+ahash = { version = "0.8.12", features = ["serde"] }
+
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+strip = true
+panic = 'abort'
+incremental = false
+overflow-checks = false
