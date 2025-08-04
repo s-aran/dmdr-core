@@ -123,6 +123,28 @@ impl UuidIndexes {
         }
     }
 
+    pub fn has_model_name(&self, name: &str) -> bool {
+        self.model_map
+            .values()
+            .any(|model| model.model_name == name)
+    }
+
+    pub fn has_model(&self, uuid: &str) -> bool {
+        self.model_map.contains_key(uuid)
+    }
+
+    pub fn has_field(&self, uuid: &str) -> bool {
+        self.field_map.contains_key(uuid)
+    }
+
+    pub fn has_source_field(&self, uuid: &str) -> bool {
+        self.src_field_rels.contains_key(uuid)
+    }
+
+    pub fn has_target_model(&self, uuid: &str) -> bool {
+        self.target_model_rels.contains_key(uuid)
+    }
+
     /// get model objects
     pub fn get_models(&self) -> Vec<Arc<MyModel>> {
         self.model_map.values().cloned().collect()
@@ -136,6 +158,15 @@ impl UuidIndexes {
     /// get model object from uuid
     pub fn get_model(&self, uuid: &str) -> Arc<MyModel> {
         Arc::clone(self.model_map.get(uuid).unwrap())
+    }
+
+    pub fn get_model_by_name(&self, name: &str) -> Arc<MyModel> {
+        Arc::clone(
+            self.model_map
+                .values()
+                .find(|model| model.model_name == name)
+                .unwrap(),
+        )
     }
 
     /// get field object from uuid
