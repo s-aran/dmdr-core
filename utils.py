@@ -55,11 +55,11 @@ class MyFieldUtils:
                 name=instance.name,
                 column=instance.column,
                 attname=instance.attname,
-                verbose_name=instance.verbose_name,
+                verbose_name=f"{instance.verbose_name}",
                 related_model=MetaData.make(instance.related_model)
                 if instance.related_model
                 else None,
-                help_text=instance.help_text,
+                help_text=f"{instance.help_text}",
                 validators=[str(SourceCode.from_obj(v)) for v in instance.validators],
                 null=instance.null,
                 _meta_data=MetaData.make(field),

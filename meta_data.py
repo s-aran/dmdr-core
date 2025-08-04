@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from dataclasses import dataclass
 import random
 import uuid
@@ -23,3 +24,20 @@ class MetaData:
             source=obj,
             code=SourceCode.from_obj(obj),
         )
+
+    def to_dict(self) -> dict:
+        result = {
+            "uuid": self.uuid,
+            "source": None,
+            "code": self.code.to_dict(),
+        }
+
+        # test
+        try:
+            json.dumps(result)
+        except TypeError as e:
+            print("*" * 80)
+            print(self.uuid)
+            print(e)
+
+        return result

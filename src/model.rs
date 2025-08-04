@@ -5,7 +5,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SourceCode {
     pub source_file: String,
-    pub partial: String,
+    pub partial: Vec<String>,
     pub line_number: usize,
 }
 
@@ -62,14 +62,6 @@ impl From<&str> for RelationType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct RelationOld {
-    pub src_field: MyField,
-    pub target_model: MyModel,
-    pub relation_type: RelationType,
-    pub through_field: Option<MyField>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Relation {
     pub src_field: String,
     pub target_model: String,
@@ -77,36 +69,10 @@ pub struct Relation {
     pub through_field: Option<String>,
 }
 
-impl From<RelationOld> for Relation {
-    fn from(value: RelationOld) -> Self {
-        Self {
-            src_field: value.src_field._meta_data.uuid,
-            target_model: value.target_model._meta_data.uuid,
-            relation_type: value.relation_type,
-            through_field: value.through_field.map(|f| f._meta_data.uuid),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub(crate) struct StructureOld {
-    pub models: Vec<MyModel>,
-    pub relations: Vec<RelationOld>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Structure {
     pub models: Vec<MyModel>,
     pub relations: Vec<Relation>,
-}
-
-impl From<StructureOld> for Structure {
-    fn from(value: StructureOld) -> Self {
-        Self {
-            models: value.models,
-            relations: value.relations.into_iter().map(|r| r.into()).collect(),
-        }
-    }
 }
 
 #[derive(Clone, Debug)]

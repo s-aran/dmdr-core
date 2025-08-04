@@ -127,91 +127,91 @@
 # from pathlib import Path
 # from dataclasses import asdict, dataclass, is_dataclass
 # from typing import List
-# 
+#
 # import django
 # from django.apps import apps
 # from django.db.models import ObjectDoesNotExist
 # from icecream import ic
-# 
+#
 # import msgspec
 # from meta_data import MetaData
 # from utils import MyModelUtils
 # from my_model import MyModel
 # from my_field import MyField
-# 
-# 
+#
+#
 # def setup_django(project_pkg: str, project_root: Path):
 #     """setup django
-# 
+#
 #     Args:
 #         project_pkg: python package
 #         project_root: settings.py directory path
 #     """
-# 
+#
 #     sys.path.insert(0, str(project_root))
-# 
+#
 #     os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"{project_pkg}.settings")
-# 
+#
 #     django.setup()
-# 
-# 
+#
+#
 # class RelationType(StrEnum):
 #     ForeignKey = "ForeignKey"
 #     OneToOne = "OneToOne"
 #     ManyToMany = "ManyToMany"
-# 
-# 
+#
+#
 # @dataclass
 # class Relation:
 #     src_field: MyField  # source field
 #     target_model: MyModel  # ref
 #     relation_type: RelationType
 #     through_field: MyField | None = None  # ManyToMany
-# 
-# 
+#
+#
 # @dataclass
 # class Output:
 #     models: List[MyModel]
 #     relations: List[Relation]
-# 
-# 
+#
+#
 # def inspect_models(project_pkg: str, project_root: Path) -> Output:
 #     """inspect models and return Output object."""
-# 
+#
 #     setup_django(project_pkg, project_root)
-# 
+#
 #     model_objs: list[MyModel] = []
 #     relations: list[Relation] = []
 #     model_lookup: dict[str, MyModel] = {}
-# 
+#
 #     for model_cls in apps.get_models():
 #         my_model: MyModel = MyModelUtils.from_instance(model_cls)
 #         model_objs.append(my_model)
 #         model_lookup[my_model._meta_data.uuid] = my_model
-# 
+#
 #         # extract relation from fields
 #         for f in my_model.fields:
 #             if f.related_model is None:
 #                 continue
-# 
+#
 #             orig_field = f._meta_data.source
 #             remote = getattr(orig_field, "remote_field", None)
 #             if remote is None:
 #                 continue
-# 
+#
 #             if getattr(remote, "many_to_many", False):
 #                 rel_type = RelationType.ManyToMany
 #             elif getattr(remote, "one_to_one", False):
 #                 rel_type = RelationType.OneToOne
 #             else:
 #                 rel_type = RelationType.ForeignKey
-# 
+#
 #             target = model_lookup.get(f.related_model.uuid)
-#             if target is None:  
+#             if target is None:
 #                 target = MyModelUtils.from_instance(f.related_model.source)
 #                 model_objs.append(target)
 #                 model_lookup[target._meta_data.uuid] = target
-# 
+#
 #             relations.append(
 #                 Relation(
 #                     src_field=f,
@@ -220,18 +220,20 @@
 #                     through_field=None,  # set after if ManyToMany
 #                 )
 #             )
-# 
+#
 #     return Output(models=model_objs, relations=relations)
-
 
 
 from __future__ import annotations
 from enum import StrEnum
 import os
+import pickle
 import sys
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Tuple, Type
+from django.conf import settings
+from icecream import ic
 
 import django
 from django.apps import apps
@@ -241,6 +243,7 @@ from meta_data import MetaData
 from utils import MyModelUtils
 from my_model import MyModel
 from my_field import MyField
+import json
 
 
 def setup_django(project_pkg: str, project_root: Path):
@@ -262,11 +265,31 @@ class Relation:
     relation_type: RelationType
     through_field: MyField | None = None
 
+    def to_dict(self) -> dict:
+        result = {
+            "src_field": self.src_field.to_dict(),
+            "target_model": self.target_model.to_dict(),
+            "relation_type": self.relation_type.value,
+            "through_field": self.through_field.to_dict()
+            if self.through_field
+            else None,
+        }
+
+        return result
+
 
 @dataclass
 class Output:
     models: List[MyModel]
     relations: List[Relation]
+
+    def to_dict(self) -> dict:
+        result = {
+            "models": [m.to_dict() for m in self.models],
+            "relations": [r.to_dict() for r in self.relations],
+        }
+
+        return result
 
 
 def inspect_models(project_pkg: str, project_root: Path) -> Output:
@@ -344,7 +367,6 @@ def inspect_models(project_pkg: str, project_root: Path) -> Output:
     return Output(models=model_objs, relations=relations)
 
 
-
 def print_relations_ascii(output: Output, max_width: int = 60):
     for rel in output.relations:
         src = f"{rel.src_field.name}@{rel.src_field._meta_data.source.model.__name__}"
@@ -357,22 +379,23 @@ def print_relations_ascii(output: Output, max_width: int = 60):
 
 
 def write(output: Output, output_dir: Path):
-    for m in output.models:
-        m._meta_data.source = None
-        for f in m.fields:
-            f._meta_data.source = None
-            if getattr(f.related_model, "_meta_data", None):
-                f.related_model._meta_data.source = None
-            if f.related_model:
-                f.related_model.source = None
-
-    for rel in output.relations:
-        rel.target_model._meta_data.source = None
-
     output_dir.mkdir(exist_ok=True)
 
-    data: bytes = msgspec.msgpack.encode(output)
-    (output_dir / "output.json").write_bytes(data)
+    data = output.to_dict()
+
+    with open("output.json", mode="w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def load(path: Path) -> Output:
+    from django.conf import settings
+
+    settings.configure(
+        USE_I18N=False,
+    )
+
+    with open(path, "rb") as f:
+        return pickle.load(f)
 
 
 if __name__ == "__main__":
@@ -380,7 +403,8 @@ if __name__ == "__main__":
     PROJECT_ROOT = BASE_DIR / "django-tutorial-master" / "mysite"
     PROJECT_PKG = "mysite"
 
-    result = inspect_models(PROJECT_PKG, PROJECT_ROOT)
+    # result = inspect_models(PROJECT_PKG, PROJECT_ROOT)
+    result = load(Path("data.pickled"))
 
-    print_relations_ascii(result)
+    # print_relations_ascii(result)
     write(result, Path("."))

@@ -26,12 +26,20 @@ class MyModel:
 
     def to_dict(self) -> dict:
         result = {
-                "app_label": self.app_label,
-                "db_table": self.db_table,
-                "model_name":self.model_name,
-                "object_name": self.object_name,
-                "fields": [f.to_dict() for f in self.fields],
-                "_meta_data": self._meta_data.to_dict(),
-                }
-        return result
+            "app_label": self.app_label,
+            "db_table": self.db_table,
+            "model_name": self.model_name,
+            "object_name": self.object_name,
+            "fields": [f.to_dict() for f in self.fields],
+            "_meta_data": self._meta_data.to_dict(),
+        }
 
+        # test
+        try:
+            json.dumps(result)
+        except TypeError as e:
+            print("m" * 80)
+            print(self.model_name)
+            print(e)
+
+        return result

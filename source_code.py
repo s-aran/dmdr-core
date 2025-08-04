@@ -24,3 +24,12 @@ class SourceCode:
         fl = self.source_file
         ln = self.line_number
         return f"{fl}:L{ln}"
+
+    def to_dict(self) -> dict:
+        result = {
+                "source_file": self.source_file,
+                "partial": self.partial,
+                "line_number": self.line_number,
+                }
+
+        return result
