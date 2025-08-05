@@ -10,17 +10,16 @@ from source_code import SourceCode
 
 class MyModelUtils:
     @staticmethod
-    def from_instance(model: models.Model) -> MyModel:
+    def from_instance(model: type[models.Model]) -> MyModel:
         instance = model._meta
-        # ic(vars(instance))
 
         return MyModel(
             app_label=instance.app_label,
             db_table=instance.db_table,
-            model_name=instance.model_name,
-            object_name=instance.object_name,
+            model_name=str(instance.model_name),
+            object_name=str(instance.object_name),
             fields=[MyFieldUtils.from_instance(f) for f in instance.get_fields()],
-            _meta_data=MetaData.make(instance),
+            _meta_data=MetaData.make(model),
         )
 
 
@@ -28,7 +27,6 @@ class MyFieldUtils:
     @staticmethod
     def from_instance(field) -> MyField:
         instance = field
-        # ic(vars(instance))
 
         if isinstance(field, models.ManyToOneRel) or isinstance(
             field, models.ManyToManyRel
@@ -42,15 +40,9 @@ class MyFieldUtils:
                 help_text="",
                 validators=[],
                 null=instance.null,
-                _meta_data=MetaData.make(instance),
+                _meta_data=MetaData.make(type(field)),
             )
         else:
-            # if instance.related_model:
-            #     from icecream import ic
-            #     ic(id(instance.related_model))
-            #     m = MetaData.make(instance.related_model)
-            #     ic(m.uuid)
-
             return MyField(
                 name=instance.name,
                 column=instance.column,
@@ -60,7 +52,9 @@ class MyFieldUtils:
                 if instance.related_model
                 else None,
                 help_text=f"{instance.help_text}",
-                validators=[str(SourceCode.from_obj(v)) for v in instance.validators],
+                validators=[
+                    str(SourceCode.from_obj(type(v))) for v in instance.validators
+                ],
                 null=instance.null,
-                _meta_data=MetaData.make(instance),
+                _meta_data=MetaData.make(type(field)),
             )

@@ -11,13 +11,13 @@ class SourceCode:
     line_number: int
 
     @staticmethod
-    def from_obj(obj) -> SourceCode:
-        if isinstance(obj, types.FunctionType):
+    def from_obj(t) -> SourceCode:
+        if isinstance(t, types.FunctionType):
             fl = "<build-in function>"
             partial, ln = ["<build-in function>"], 0
         else:
-            fl = str(inspect.getsourcefile(type(obj)))
-            partial, ln = inspect.getsourcelines(type(obj))
+            fl = str(inspect.getsourcefile(t))
+            partial, ln = inspect.getsourcelines(t)
 
         return SourceCode(
             source_file=fl,

@@ -4,9 +4,6 @@ import dataclasses
 import json
 from dataclasses import dataclass, field
 
-from icecream import ic
-
-# from utils import MyModelUtils
 from meta_data import MetaData
 
 
@@ -31,20 +28,6 @@ class MyField:
         return json.dumps(dataclasses.asdict(self))
 
     def to_dict(self) -> dict:
-        # result = {
-        #     "name": self.name,
-        #     "column": self.column,
-        #     "attname": self.attname,
-        #     "verbose_name": self.verbose_name,
-        #     "help_text": self.help_text,
-        #     "related_model": self.related_model.to_dict()
-        #     if self.related_model
-        #     else None,
-        #     "validators": self.validators,
-        #     "null": self.null,
-        #     "_meta_data": self._meta_data.to_dict(),
-        # }
-
         result = {
             "name": self.name,
             "column": self.column,
