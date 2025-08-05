@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import json
-from django.db import models
 from dataclasses import dataclass, field
 
 from meta_data import MetaData
