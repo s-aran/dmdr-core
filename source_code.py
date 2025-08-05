@@ -1,18 +1,23 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import inspect
+import types
 
 
 @dataclass
 class SourceCode:
     source_file: str
-    partial: str
+    partial: list[str]
     line_number: int
 
     @staticmethod
     def from_obj(obj) -> SourceCode:
-        fl = inspect.getsourcefile(type(obj))
-        partial, ln = inspect.getsourcelines(type(obj))
+        if isinstance(obj, types.FunctionType):
+            fl = "<build-in function>"
+            partial, ln = ["<build-in function>"], 0
+        else:
+            fl = str(inspect.getsourcefile(type(obj)))
+            partial, ln = inspect.getsourcelines(type(obj))
 
         return SourceCode(
             source_file=fl,
@@ -27,9 +32,9 @@ class SourceCode:
 
     def to_dict(self) -> dict:
         result = {
-                "source_file": self.source_file,
-                "partial": self.partial,
-                "line_number": self.line_number,
-                }
+            "source_file": self.source_file,
+            "partial": self.partial,
+            "line_number": self.line_number,
+        }
 
         return result

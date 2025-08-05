@@ -20,7 +20,7 @@ class MyModelUtils:
             model_name=instance.model_name,
             object_name=instance.object_name,
             fields=[MyFieldUtils.from_instance(f) for f in instance.get_fields()],
-            _meta_data=MetaData.make(model),
+            _meta_data=MetaData.make(instance),
         )
 
 
@@ -42,7 +42,7 @@ class MyFieldUtils:
                 help_text="",
                 validators=[],
                 null=instance.null,
-                _meta_data=MetaData.make(field),
+                _meta_data=MetaData.make(instance),
             )
         else:
             # if instance.related_model:
@@ -62,5 +62,5 @@ class MyFieldUtils:
                 help_text=f"{instance.help_text}",
                 validators=[str(SourceCode.from_obj(v)) for v in instance.validators],
                 null=instance.null,
-                _meta_data=MetaData.make(field),
+                _meta_data=MetaData.make(instance),
             )
