@@ -70,8 +70,12 @@ def inspect_models(project_pkg: str, project_root: Path) -> Output:
     # Collect relations as UUID strings
     relations: List[Relation] = []
     for model_cls, my_model in model_lookup.items():
-        for field in my_model.fields:
+        fields = my_model.local_fields + my_model.relation_fields + my_model.forward_fields
+        for field in fields:
             related = field.related_model
+            print("-" * 80)
+            print(my_model.model_name)
+            print(related)
             if not related:
                 continue
             inst = field._meta_data.source
@@ -93,6 +97,7 @@ def inspect_models(project_pkg: str, project_root: Path) -> Output:
             tgt_uuid = target_model._meta_data.uuid
             through_uuid = through._meta_data.uuid if through is not None else None
 
+            # if not (src_uuid in map(lambda e: e.src_field, relations) and tgt_uuid in map(lambda e: e.target_model, relations)):
             relations.append(
                 Relation(
                     src_field=src_uuid,
