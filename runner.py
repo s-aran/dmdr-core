@@ -3,47 +3,51 @@ from __future__ import annotations
 import os
 import sys
 import json
+import uuid
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict, field
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple, Any
 
 import django
 from django.apps import apps
+from django.db.models import ForeignKey, OneToOneField, ManyToManyField
 
-from utils import MyModelUtils
-from my_model import MyModel
-
-
-class RelationType(Enum):
-    ForeignKey = "ForeignKey"
-    OneToOne = "OneToOne"
-    ManyToMany = "ManyToMany"
-
+from utils import MyModelUtils, MyFieldUtils
 
 @dataclass
 class Relation:
+    src_model_uuid: str
+    src_model: str
+    src_field_uuid: str
     src_field: str
-    target_model: str
-    relation_type: RelationType
-    through_field: Optional[str] = None
+    tgt_model_uuid: str
+    tgt_model: str
+    relation_type: str
+    through_model_uuid: Optional[str] = None
+    through_model: Optional[str] = None
 
-    def to_dict(self) -> dict:
-        # Always include through_field (None will be serialized as null)
-        return {
-            "src_field": self.src_field,
-            "target_model": self.target_model,
-            "relation_type": self.relation_type.value,
-            "through_field": self.through_field,
-        }
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ModelInfo:
+    model_uuid: str
+    app_label: str
+    model_name: str
+    fields: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 
 @dataclass
 class Output:
-    models: List[MyModel]
+    models: List[ModelInfo]
     relations: List[Relation]
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "models": [m.to_dict() for m in self.models],
             "relations": [r.to_dict() for r in self.relations],
@@ -56,48 +60,63 @@ def setup_django(project_pkg: str, project_root: Path) -> None:
     django.setup()
 
 
+class RelationType(Enum):
+    ForeignKey = "ForeignKey"
+    OneToOne   = "OneToOne"
+    ManyToMany = "ManyToMany"
+
+
 def inspect_models(project_pkg: str, project_root: Path) -> Output:
     setup_django(project_pkg, project_root)
     model_lookup: dict[type, MyModel] = {}
     models: List[MyModel] = []
 
-    # Load all Django models into MyModel instances
+    # MyModel を構築（Djangoクラス→MyModel の辞書を作る）
     for model_cls in apps.get_models():
         my_model = MyModelUtils.from_instance(model_cls)
         models.append(my_model)
         model_lookup[model_cls] = my_model
 
-    # Collect relations as UUID strings
     relations: List[Relation] = []
     for model_cls, my_model in model_lookup.items():
-        fields = my_model.local_fields + my_model.relation_fields + my_model.forward_fields
-        for field in fields:
-            related = field.related_model
-            print("-" * 80)
-            print(my_model.model_name)
-            print(related)
-            if not related:
-                continue
+        # ★ forward_fields のみ
+        for field in my_model.forward_fields:
+            # フィールドインスタンス（utils 修正で入る）
             inst = field._meta_data.source
+            if inst is None:
+                continue
+
+            # 関連先 MetaData（utils 修正で MetaData | None）
+            related_meta = field.related_model
+            if not related_meta:
+                continue
+
+            # リレーション種別
             if getattr(inst, "many_to_many", False):
                 rtype = RelationType.ManyToMany
-                through = getattr(inst, "through", None)
+                through_cls = getattr(inst, "through", None)
             elif getattr(inst, "one_to_one", False):
                 rtype = RelationType.OneToOne
-                through = None
+                through_cls = None
             else:
                 rtype = RelationType.ForeignKey
-                through = None
+                through_cls = None
 
-            target_model = model_lookup.get(related.source)
+            # 対象モデル（Djangoクラス）→ MyModel
+            target_model = model_lookup.get(related_meta.source)
             if not target_model:
                 continue
 
+            # UUID を詰める
             src_uuid = field._meta_data.uuid
             tgt_uuid = target_model._meta_data.uuid
-            through_uuid = through._meta_data.uuid if through is not None else None
 
-            # if not (src_uuid in map(lambda e: e.src_field, relations) and tgt_uuid in map(lambda e: e.target_model, relations)):
+            through_uuid = None
+            if through_cls:
+                through_mymodel = model_lookup.get(through_cls)
+                if through_mymodel:
+                    through_uuid = through_mymodel._meta_data.uuid
+
             relations.append(
                 Relation(
                     src_field=src_uuid,
@@ -109,16 +128,13 @@ def inspect_models(project_pkg: str, project_root: Path) -> Output:
 
     return Output(models=models, relations=relations)
 
-
 def write_output(output: Output, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    data = output.to_dict()
     with open(output_dir / "output.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        json.dump(output.to_dict(), f, indent=2, ensure_ascii=False)
 
 
 def main():
-    # Usage: runner.py <project_root> <project_package>
     if len(sys.argv) >= 3:
         project_root = Path(sys.argv[1]).resolve()
         project_pkg = sys.argv[2]
