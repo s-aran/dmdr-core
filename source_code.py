@@ -12,7 +12,7 @@ class SourceCode:
 
     @staticmethod
     def from_obj(t) -> SourceCode:
-        if isinstance(t, types.FunctionType):
+        if t is types.FunctionType:
             fl = "<build-in function>"
             partial, ln = ["<build-in function>"], 0
         else:

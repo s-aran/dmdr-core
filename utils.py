@@ -13,12 +13,26 @@ class MyModelUtils:
     def from_instance(model: type[models.Model]) -> MyModel:
         instance = model._meta
 
+        raw_local_fields = [f for f in instance.get_fields() if not f.auto_created]
+        raw_relation_fields = [
+            f
+            for f in instance.get_fields()
+            if f.is_relation and f.auto_created and not f.concrete
+        ]
+        raw_forward_fields = [
+            f for f in instance.get_fields() if f.is_relation and not f.auto_created
+        ]
+
         return MyModel(
             app_label=instance.app_label,
             db_table=instance.db_table,
             model_name=str(instance.model_name),
             object_name=str(instance.object_name),
-            fields=[MyFieldUtils.from_instance(f) for f in instance.get_fields()],
+            local_fields=[MyFieldUtils.from_instance(f) for f in raw_local_fields],
+            relation_fields=[
+                MyFieldUtils.from_instance(f) for f in raw_relation_fields
+            ],
+            forward_fields=[MyFieldUtils.from_instance(f) for f in raw_forward_fields],
             _meta_data=MetaData.make(model),
         )
 
@@ -40,7 +54,7 @@ class MyFieldUtils:
                 help_text="",
                 validators=[],
                 null=instance.null,
-                _meta_data=MetaData.make(type(field)),
+                _meta_data=MetaData.make(type(instance)),
             )
         else:
             return MyField(
@@ -56,5 +70,5 @@ class MyFieldUtils:
                     str(SourceCode.from_obj(type(v))) for v in instance.validators
                 ],
                 null=instance.null,
-                _meta_data=MetaData.make(type(field)),
+                _meta_data=MetaData.make(type(instance)),
             )

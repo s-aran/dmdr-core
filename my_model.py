@@ -14,7 +14,10 @@ class MyModel:
     db_table: str
     model_name: str
     object_name: str
-    fields: list[MyField]
+
+    local_fields: list[MyField]
+    relation_fields: list[MyField]
+    forward_fields: list[MyField]
 
     _meta_data: MetaData = field(
         repr=False, compare=False, hash=False, init=True, metadata={"asdict": False}
@@ -29,7 +32,9 @@ class MyModel:
             "db_table": self.db_table,
             "model_name": self.model_name,
             "object_name": self.object_name,
-            "fields": [f.to_dict() for f in self.fields],
+            "local_fields": [f.to_dict() for f in self.local_fields],
+            "relation_fields": [f.to_dict() for f in self.relation_fields],
+            "forward_fields": [f.to_dict() for f in self.forward_fields],
             "_meta_data": self._meta_data.to_dict(),
         }
 
