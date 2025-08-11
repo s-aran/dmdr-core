@@ -3,14 +3,19 @@ name = "dmdr-core"
 version = "0.1.0"
 edition = "2024"
 
+
 [dependencies]
 clap = { version = "4.5.42", features = ["derive"] }
 clap_derive = "4.5.41"
 graphviz-rust = "0.9.5"
 serde = { version = "1.0.219", features = ["derive"] }
-simd-json = "0.15.1"
+simd-json = { version = "0.15.1", optional = true }
+serde_json = { version = "1.0.142", optional = true }
 ahash = { version = "0.8.12", features = ["serde"] }
 
+[features]
+release-deps = ["simd-json"]
+default = ["serde_json"]
 
 [profile.release]
 opt-level = 3

@@ -38,9 +38,24 @@ pub struct MyModel {
     pub db_table: String,
     pub model_name: String,
     pub object_name: String,
-    pub fields: Vec<MyField>,
+
+    #[serde(default)]
+    pub local_fields: Vec<MyField>,
+    #[serde(default, alias = "related_fields", alias = "relation_fields")]
+    pub relation_fields: Vec<MyField>,
+    #[serde(default, alias = "forwarded_fields", alias = "forward_fields")]
+    pub forward_fields: Vec<MyField>,
 
     pub _meta_data: MetaData,
+}
+
+impl MyModel {
+    pub fn all_fields(&self) -> impl Iterator<Item = &MyField> {
+        self.local_fields
+            .iter()
+            .chain(self.relation_fields.iter())
+            .chain(self.forward_fields.iter())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -63,10 +78,15 @@ impl From<&str> for RelationType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Relation {
+    pub src_model_uuid: String,
+    pub src_model: String,
+    pub src_field_uuid: String,
     pub src_field: String,
+    pub target_model_uuid: String,
     pub target_model: String,
     pub relation_type: RelationType,
-    pub through_field: Option<String>,
+    pub through_model_uuid: Option<String>,
+    pub through_model: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -99,7 +119,8 @@ impl UuidIndexes {
             let arc_model = Arc::new(model.clone());
             model_map.insert(m_uuid.clone(), Arc::clone(&arc_model));
 
-            for field in &model.fields {
+            // for field in &model.fields {
+            for field in model.all_fields() {
                 let f_uuid = field._meta_data.uuid.clone();
                 let arc_field = Arc::new(field.clone());
                 field_map.insert(f_uuid.clone(), Arc::clone(&arc_field));
