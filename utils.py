@@ -14,9 +14,14 @@ class MyModelUtils:
         instance = model._meta
 
         raw_local_fields = [f for f in instance.get_fields() if not f.auto_created]
-        raw_relation_fields = [f for f in instance.get_fields() if f.is_relation and f.auto_created and not f.concrete]
-        raw_forward_fields = [f for f in instance.get_fields() if f.is_relation and not f.auto_created]
-
+        raw_relation_fields = [
+            f
+            for f in instance.get_fields()
+            if f.is_relation and f.auto_created and not f.concrete
+        ]
+        raw_forward_fields = [
+            f for f in instance.get_fields() if f.is_relation and not f.auto_created
+        ]
 
         return MyModel(
             app_label=instance.app_label,
@@ -24,7 +29,9 @@ class MyModelUtils:
             model_name=str(instance.model_name),
             object_name=str(instance.object_name),
             local_fields=[MyFieldUtils.from_instance(f) for f in raw_local_fields],
-            relation_fields=[MyFieldUtils.from_instance(f) for f in raw_relation_fields],
+            relation_fields=[
+                MyFieldUtils.from_instance(f) for f in raw_relation_fields
+            ],
             forward_fields=[MyFieldUtils.from_instance(f) for f in raw_forward_fields],
             _meta_data=MetaData.make(model),
         )
@@ -55,7 +62,7 @@ class MyFieldUtils:
                 column=instance.column,
                 attname=instance.attname,
                 verbose_name=f"{instance.verbose_name}",
-                related_model=MetaData.make(instance.related_model).uuid
+                related_model=MetaData.make(instance.related_model)
                 if instance.related_model
                 else None,
                 help_text=f"{instance.help_text}",
@@ -65,4 +72,3 @@ class MyFieldUtils:
                 null=instance.null,
                 _meta_data=MetaData.make(type(instance)),
             )
-

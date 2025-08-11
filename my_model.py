@@ -19,7 +19,6 @@ class MyModel:
     relation_fields: list[MyField]
     forward_fields: list[MyField]
 
-
     _meta_data: MetaData = field(
         repr=False, compare=False, hash=False, init=True, metadata={"asdict": False}
     )

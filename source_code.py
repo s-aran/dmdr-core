@@ -38,4 +38,3 @@ class SourceCode:
         }
 
         return result
-
