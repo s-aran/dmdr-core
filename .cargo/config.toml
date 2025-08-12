@@ -1,0 +1,4 @@
+[alias]
+release = "build --release --features release-deps"
+run-release = "run --release --features release-deps"
+test-release = "test --release --features release-deps"
