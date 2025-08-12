@@ -102,6 +102,8 @@ pub struct UuidIndexes {
     field_model: AHashMap<String, String>,
     src_field_rels: AHashMap<String, Arc<Relation>>,
     target_model_rels: AHashMap<String, Arc<Relation>>,
+    model_name_map: AHashMap<String, Arc<MyModel>>,
+    db_table_map: AHashMap<String, Arc<MyModel>>,
 }
 
 impl UuidIndexes {
@@ -112,12 +114,16 @@ impl UuidIndexes {
         let mut field_model = AHashMap::new();
         let mut src_field_rels = AHashMap::new();
         let mut target_model_rels = AHashMap::new();
+        let mut model_name_map = AHashMap::new();
+        let mut db_table_map = AHashMap::new();
 
         // models
         for model in &shared.models {
             let m_uuid = model._meta_data.uuid.clone();
             let arc_model = Arc::new(model.clone());
             model_map.insert(m_uuid.clone(), Arc::clone(&arc_model));
+            model_name_map.insert(model.model_name.clone(), Arc::clone(&arc_model));
+            db_table_map.insert(model.db_table.clone(), Arc::clone(&arc_model));
 
             // for field in &model.fields {
             for field in model.all_fields() {
@@ -141,6 +147,8 @@ impl UuidIndexes {
             field_model,
             src_field_rels,
             target_model_rels,
+            model_name_map,
+            db_table_map,
         }
     }
 
@@ -166,6 +174,10 @@ impl UuidIndexes {
         self.target_model_rels.contains_key(uuid)
     }
 
+    pub fn has_db_table(&self, db_table: &str) -> bool {
+        self.db_table_map.contains_key(db_table)
+    }
+
     /// get model objects
     pub fn get_models(&self) -> Vec<Arc<MyModel>> {
         self.model_map.values().cloned().collect()
@@ -177,17 +189,16 @@ impl UuidIndexes {
     }
 
     /// get model object from uuid
-    pub fn get_model(&self, uuid: &str) -> Arc<MyModel> {
-        Arc::clone(self.model_map.get(uuid).unwrap())
+    pub fn get_model_by_uuid(&self, uuid: &str) -> Option<Arc<MyModel>> {
+        Some(Arc::clone(self.model_map.get(uuid)?))
     }
 
-    pub fn get_model_by_name(&self, name: &str) -> Arc<MyModel> {
-        Arc::clone(
-            self.model_map
-                .values()
-                .find(|model| model.model_name == name)
-                .unwrap(),
-        )
+    pub fn get_model_by_name(&self, name: &str) -> Option<Arc<MyModel>> {
+        Some(Arc::clone(self.model_name_map.get(name)?))
+    }
+
+    pub fn get_model_by_table(&self, name: &str) -> Option<Arc<MyModel>> {
+        Some(Arc::clone(self.db_table_map.get(name)?))
     }
 
     /// get field object from uuid
