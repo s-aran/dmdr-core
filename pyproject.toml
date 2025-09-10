@@ -5,7 +5,7 @@ description = "Django model analysis tool for generating model diagrams and docu
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "django==4.1",
+    "django==4.2.24",
     "djangorestframework>=3.15.1",
     "msgspec>=0.19.0",
 ]
